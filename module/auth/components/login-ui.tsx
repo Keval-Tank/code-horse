@@ -50,7 +50,7 @@ const LoginUI = () => {
                     <p className='text-white text-md'>Login using Github</p>
                 </div>
                 <div>
-                     <Button className='h-max mb-5' onClick={handleGithubLogin}>
+                     <Button className='h-max mb-5 w-[500px]' onClick={handleGithubLogin}>
                         <div className='flex justify-center item-center gap-2 p-3'>
                             <GithubIcon className='size-[30px] '/>
                             <span className='text-2xl'>{loading ? "Signing in..." : "GitHub"}</span>
