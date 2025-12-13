@@ -14,13 +14,6 @@ const ContributionGraph = () => {
         queryFn: async () => await getContributionStats(),
         staleTime: 1000 * 60 * 5
     })
-    if (isLoading) {
-        return (
-            <div>
-                <div>Loading Contribution data</div>
-            </div>
-        )
-    }
     if (!data || !data.contributions?.length) {
         return (
             <div>
@@ -28,7 +21,6 @@ const ContributionGraph = () => {
             </div>
         )
     }
-
     return (
         <div>
             <Card className='min-w-max'>
@@ -37,7 +29,11 @@ const ContributionGraph = () => {
                     <CardDescription>Visualizing your code frequency over the last year</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className='p-5 flex items-center justify-center'>
+                   {isLoading ?
+                   (<><div>
+                    <p>Fecthing activity heatmap...</p>
+                    </div></>) : 
+                   (<> <div className='p-5 flex items-center justify-center'>
                         <div className='text-center mt-0'>
                             <div>
                             <span className='font-bold text-xl'>{data.totalContributions}</span> contributions in the last year
@@ -60,7 +56,7 @@ const ContributionGraph = () => {
                             />
                         </div>
                         </div>
-                    </div>
+                    </div></>)}
                 </CardContent>
             </Card>
         </div>

@@ -28,17 +28,17 @@ const Dashboard = () => {
            <p>Overview of your coding activity and AI reviews</p>
         </div>
         <div className='flex items-center gap-3 ml-5'>
-        <DataCard heading="Total Repositories" icon="branch" data={stats?.totalRepos} footer="Connected Repositories"/>
-        <DataCard heading="Total Commits" icon="commit" data={stats?.totalCommits!} footer="in last year"/>
-        <DataCard heading="Pull Requests" icon="pull" data={stats?.totalPRs!} footer="All Time"/>
-        <DataCard heading="AI Reviews" icon="message" data={stats?.totalReviews!} footer="Generated Reviews"/>
+        <DataCard heading="Total Repositories" icon="branch" data={stats?.totalRepos} footer="Connected Repositories" isLoading={isLoading}/>
+        <DataCard heading="Total Commits" icon="commit" data={stats?.totalCommits!} footer="in last year" isLoading={isLoading}/>
+        <DataCard heading="Pull Requests" icon="pull" data={stats?.totalPRs!} footer="All Time" isLoading={isLoading}/>
+        <DataCard heading="AI Reviews" icon="message" data={stats?.totalReviews!} footer="Generated Reviews" isLoading={isLoading}/>
         </div>
         <div className='mt-6 px-5'>
-        <ContributionGraph/>
+        <ContributionGraph />
         </div>
         <div className='mt-5 px-5'>
           {
-            isLoading ? (<><div>Data is Loading</div></>) : (<><ActivityGraph monthlyActivity={monthly_activity}/></>)
+            isLoading ? (<><div>Data is Loading...</div></>) : (<><ActivityGraph monthlyActivity={monthly_activity}/></>)
           }
         </div>
         <div>

@@ -3,7 +3,6 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card"
 
 const ActivityGraph = ({monthlyActivity}) => {
-    console.log(monthlyActivity)
   return (
     <Card>
         <CardHeader>
@@ -11,7 +10,7 @@ const ActivityGraph = ({monthlyActivity}) => {
             <CardDescription>This shows your activity throughout the year</CardDescription>
         </CardHeader>
         <CardContent>
-            <div>
+            <div className='h-[300px]'>
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={monthlyActivity || []}>
                         <CartesianGrid strokeDasharray="3 3"/>
@@ -22,8 +21,8 @@ const ActivityGraph = ({monthlyActivity}) => {
                         />
                         <Legend/>
                         <Bar dataKey={'commits'} name={"Commits"} fill='#3b82f6' radius={[4, 4, 0, 0]}/>
-                        <Bar dataKey={'prs'} name={"Pull requests"} fill='#3b82f6' radius={[4, 4, 0, 0]}/>
-                        <Bar dataKey={'reviews'} name={"AI reviews"} fill='#3b82f6' radius={[4, 4, 0, 0]}/>
+                        <Bar dataKey={'prs'} name={"Pull requests"} fill='#3bf686ff' radius={[4, 4, 0, 0]}/>
+                        <Bar dataKey={'reviews'} name={"AI reviews"} fill='#c13e39ff' radius={[4, 4, 0, 0]}/>
                     </BarChart>
                 </ResponsiveContainer>
             </div>

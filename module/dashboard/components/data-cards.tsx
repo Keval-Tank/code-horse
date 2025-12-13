@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card"
 import { GitCommit, GitPullRequest, MessageSquare, GitBranch } from 'lucide-react'
 
-const DataCard = ({heading, icon, data, footer} : {heading:string | undefined, icon:string | undefined, data:number | undefined, footer:string | undefined}) => {
+const DataCard = ({heading, icon, data, footer, isLoading} : {heading:string | undefined, icon:string | undefined, data:number | undefined, footer:string | undefined, isLoading: boolean}) => {
   return (
     <div><div>
               <Card className="w-[300px]">
@@ -24,10 +24,16 @@ const DataCard = ({heading, icon, data, footer} : {heading:string | undefined, i
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div>
+                    {
+                      isLoading ?
+                      (<><div>
+                        <p>Fetching data....</p>
+                        </div></>) :
+                      (<><div>
                     <span className='block text-4xl font-bold mb-2'>{data}</span>
                     <span className='block text-xs font-l'>{footer}</span>
-                    </div>
+                    </div></>)
+                    }
                   </CardContent>
               </Card>
             </div></div>
