@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchRepostories } from "@/module/repository/actions";
+import { fetchRepositories } from "@/module/repository/actions";
 
 export async function GET(req : Request){
     try{
@@ -7,7 +7,7 @@ export async function GET(req : Request){
         const page = Number(searchParams.get("page") ?? 1)
         const limit = Number(searchParams.get("limit") ?? 10)
 
-        const data = await fetchRepostories(page, limit)
+        const data = await fetchRepositories(page, limit)
 
         return NextResponse.json(data)
     }catch(error){

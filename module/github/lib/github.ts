@@ -4,6 +4,7 @@ import prisma from '@/lib/db'
 import { headers } from 'next/headers'
 
 
+
 export const getGithubToken = async() => {
     const session = await auth.api.getSession({
         headers : await headers()
@@ -137,7 +138,7 @@ export const deleteWebHook = async(owner : string, repo : string) => {
             repo
         })
 
-        const hookToDelete = hooks.find(hook => hook.config.url === webHookUrl)
+        const hookToDelete = hooks.find(hook =>  hook.config?.url?.replace(/\/$/, '') === webHookUrl.replace(/\/$/, ''))
 
         if(hookToDelete){
             await octokit.rest.repos.deleteWebhook({
@@ -151,8 +152,82 @@ export const deleteWebHook = async(owner : string, repo : string) => {
 
         return false
 
-    }catch(err){
+    }catch(err : any){
         console.log("Failed to delete hook : ", err)
+        console.log(err.request)
+        console.log(err.response)
         return false
+    }
+}
+
+export async function getRepoFileContents(token : string, owner : string, repo : string, path:string = "")
+:Promise<{path:string, content:string}[]>
+{
+    const octokit = new Octokit({
+        auth : token
+    })
+    const {data} = await octokit.rest.repos.getContent({owner, repo, path})
+    
+    if(!Array.isArray(data)){
+        if(data.type === "file" && data.content){
+            return [{
+                path : data.path,
+                content : Buffer.from(data.content, "base64").toString('utf-8')
+            }]
+        }
+        return [];
+    }
+
+    let files : {path:string, content:string}[] = []
+
+    for(let item of data){
+        if(item.type === "file"){
+            const { data : fileData} = await octokit.rest.repos.getContent({
+                owner,
+                repo,
+                path : item.path
+            })
+            if(!Array.isArray(fileData) && fileData.type === "file" && fileData.content){
+                if(!item.path.match('/\.(png|jpg|jpeg|pdf|svg|ico|zip|tar|gz)$/i')){
+                    files.push({
+                        path : item.path,
+                        content : Buffer.from(fileData.content, "base64").toString('utf-8')
+                    })
+                }
+            }
+        }else if(item.type === "dir"){
+            const subfiles = await getRepoFileContents(token, owner, repo, item.path)
+
+            files = files.concat(subfiles)
+        }
+    }
+
+    return files
+}
+
+export async function getPullReqDiff(token:string, owner:string, repo:string, prNumber:number){
+    const octokit = new Octokit({
+        auth : token
+    })
+
+    const {data : pr} = await octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number : prNumber
+    })
+
+    const {data : diff} = await octokit.rest.pulls.get({
+        owner,
+        repo,
+        pull_number : prNumber,
+        mediaType : {
+            format : 'diff'
+        }
+    })
+
+    return {
+        diff : diff as unknown as string,
+        title : pr.title,
+        description : pr.body || " "
     }
 }

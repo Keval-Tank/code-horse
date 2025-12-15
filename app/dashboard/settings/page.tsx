@@ -1,5 +1,6 @@
 import React from 'react'
 import ProfileForm from '@/module/settings/components/profile-form'
+import RepositoryList from '@/module/settings/components/repository-list'
 
 const SettingsPage = () => {
     return (
@@ -13,6 +14,7 @@ const SettingsPage = () => {
             <div className="p-3">
                 <div>
                     <ProfileForm/>
+                    <RepositoryList/>
                 </div>
             </div>
         </div>

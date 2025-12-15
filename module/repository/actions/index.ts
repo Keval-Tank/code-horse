@@ -3,6 +3,7 @@ import prisma from "@/lib/db"
 import { headers } from "next/headers"
 import { createWebHook, getRepositories } from "@/module/github/lib/github"
 import { auth } from "@/lib/auth"
+import { inngest } from "@/inngest/client"
 
 
 export const fetchRepositories = async(page:number=1, perPage:number=10) => {
@@ -52,6 +53,19 @@ export const connectRepository = async (owner:string, repo : string, githubId : 
                 userId : session.user.id
             }
         })
+    }
+
+    try{
+        await inngest.send({
+        name : "repository.connected",
+        data : {
+            owner,
+            repo,
+            userId : session.user.id
+        }
+    })
+    }catch(err){
+        console.log("failed to send event :", err)
     }
 
     return webHook

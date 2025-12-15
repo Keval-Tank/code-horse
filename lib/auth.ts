@@ -10,7 +10,7 @@ export const auth = betterAuth({
         github : {
             clientId : process.env.GITHUB_CLIENT_ID!,
             clientSecret: process.env.GITHUB_CLIENT_SECRET,
-            scope : ["repo"]
+            scope : ["repo", "admin:repo_hook"]
         }
     }
 });
