@@ -43,7 +43,7 @@ const Reviews = () => {
                 {
                     reviews && reviews?.length > 0 ? (<>{
                         reviews.map((review) => (
-                            <Card key={review.prNumber}>
+                            <Card key={review.prNumber} className="mb-2">
                                 <CardHeader>
                                     <CardTitle className="flex justify-between">
                                         <div ><div className="flex items-center gap-3 mb-1">
@@ -66,7 +66,7 @@ const Reviews = () => {
                                             formatDistance(new Date(review.createdAt), new Date())
                                         }</div>
                                         <div className="bg-[#171717] p-2 rounded-md mb-3">{
-                                            review.review.substring(0, 500)
+                                            review.review.substring(0,300)
                                         }</div>
                                         <div>
                                         <Button>

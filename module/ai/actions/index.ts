@@ -2,6 +2,7 @@
 import prisma from "@/lib/db";
 import { getPullReqDiff } from "@/module/github/lib/github";
 import { inngest } from "@/inngest/client";
+import { canCreateReview, incrementReviewCount } from "@/module/payments/lib/subscription";
 
 
 export async function reviewPullRequest(owner:string, repo:string, prNumber : number){
@@ -38,6 +39,12 @@ try{
 
     const {title} = await getPullReqDiff(token,owner, repo, prNumber)
 
+    const canReview = await canCreateReview(repository.userId, repository.id)
+    
+    if(!canReview){
+        throw new Error("Free Tier limit exceded, upgrade to premium for more")
+    }
+
     await inngest.send({
         name : "pr.review.requested",
         data : {
@@ -47,6 +54,8 @@ try{
             userId : repository.user.id
         }
     })
+
+    await incrementReviewCount(repository.user.id, repository.id)
 
     return {success : true, message : "Review Queued"}
 }catch(err){
