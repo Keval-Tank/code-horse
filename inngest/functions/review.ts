@@ -5,7 +5,6 @@ import prisma from "@/lib/db"
 import { generateText } from "ai"
 import { google } from "@ai-sdk/google"
 import { postReviewComment } from "@/module/github/lib/github"
-import { success } from "zod"
 
 export const generateReview = inngest.createFunction(
     { id: "generate-review", concurrency: 5 },
@@ -92,7 +91,7 @@ Format your response in markdown.`
                     data : {
                     repositoryId : repository.id,
                     prNumber,
-                    prTitle : title,
+                    prTitle : title || `PR${prNumber}`,
                     prUrl : `https://github.com/${owner}/${repo}/pull/${prNumber}`,
                     review,
                     status : "completed"

@@ -212,7 +212,7 @@ interface PullReqData {
     token? : string
 }
 
-export async function getPullReqDiff(token:string, owner:string, repo:string, prNumber:number) : Promise<PullReqData>{
+export async function getPullReqDiff(token:string, owner:string, repo:string, prNumber:number):Promise<PullReqData>{
     const octokit = new Octokit({
         auth : token
     })
