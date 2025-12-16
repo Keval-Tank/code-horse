@@ -205,7 +205,14 @@ export async function getRepoFileContents(token : string, owner : string, repo :
     return files
 }
 
-export async function getPullReqDiff(token:string, owner:string, repo:string, prNumber:number){
+interface PullReqData {
+    diff : string,
+    title : string,
+    description : string,
+    token? : string
+}
+
+export async function getPullReqDiff(token:string, owner:string, repo:string, prNumber:number) : Promise<PullReqData>{
     const octokit = new Octokit({
         auth : token
     })
@@ -228,6 +235,19 @@ export async function getPullReqDiff(token:string, owner:string, repo:string, pr
     return {
         diff : diff as unknown as string,
         title : pr.title,
-        description : pr.body || " "
+        description : pr.body || " ",
     }
+}
+
+export async function postReviewComment(token : string, owner: string, repo:string, prNumber : number, review : string){
+    const octokit = new Octokit({
+        auth : token
+    })
+
+    await octokit.rest.issues.createComment({
+        owner, 
+        repo,
+        issue_number : prNumber,
+        body : `## AI Code Review\n\n${review}\n\n------\n*Powered By CodeHorse*##`
+    })
 }
