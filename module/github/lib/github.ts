@@ -212,7 +212,7 @@ interface PullReqData {
     token? : string
 }
 
-export async function getPullReqDiff(token:string, owner:string, repo:string, prNumber:number) : Promise<PullReqData>{
+export async function getPullReqDiff(token:string, owner:string, repo:string, prNumber:number):Promise<PullReqData>{
     const octokit = new Octokit({
         auth : token
     })
@@ -223,8 +223,6 @@ export async function getPullReqDiff(token:string, owner:string, repo:string, pr
         pull_number : prNumber
     })
 
-    console.log("pr data -> ", pr)
-
     const {data : diff} = await octokit.rest.pulls.get({
         owner,
         repo,
@@ -233,8 +231,6 @@ export async function getPullReqDiff(token:string, owner:string, repo:string, pr
             format : 'diff'
         }
     })
-
-
 
     return {
         diff : diff as unknown as string,
