@@ -50,29 +50,29 @@ export async function fetchUserContribution(token : string, username : string){
     }
     `
 
-    // interface ContributionData{
-    //     user : {
-    //         contributionCollection : {
-    //             contributionCalendar : {
-    //                 totalContributions : number
-    //                 weeks : {
-    //                     contributionDays : {
-    //                         contributionCount : number
-    //                         date : string | Date
-    //                         color : string
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
+    interface ContributionData{
+        user : {
+            contributionsCollection : {
+                contributionCalendar : {
+                    totalContributions : number
+                    weeks : {
+                        contributionDays : {
+                            contributionCount : number
+                            date : string | Date
+                            color : string
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     try{
-        const response : any = await octokit.graphql(query,{
+        const response : ContributionData = await octokit.graphql(query,{
             username
         }) 
         return response.user.contributionsCollection.contributionCalendar
-    }catch(err : any){
+    }catch(err){
         console.log("Error while Fecthing Data : ", err)
     }
 }
@@ -129,16 +129,22 @@ export const deleteWebHook = async(owner : string, repo : string) => {
     try{
         const token = await getGithubToken()
         const octokit = new Octokit({
-            token : token
+            auth : token
         })
-        const webHookUrl = `${process.env.NEXT_PUBLIC_URL}/api/webhook/github`
+        const webHookUrl = `${process.env.NEXT_PUBLIC_URL}/api/webhooks/github`
 
         const {data : hooks} = await octokit.rest.repos.listWebhooks({
             owner,
             repo
         })
 
-        const hookToDelete = hooks.find(hook =>  hook.config?.url?.replace(/\/$/, '') === webHookUrl.replace(/\/$/, ''))
+        const hookToDelete = hooks.find(hook =>  hook.config.url === webHookUrl.trim()
+            // console.log("hook url -> ",hook.config.url)
+            // console.log("type of hook url ->", typeof hook.config.url)
+            // console.log("webHookurl ->", webHookUrl)
+            // console.log("type of webHookUrl ->", typeof webHookUrl)
+            // console.log("is equal ->", hook.config.url == webHookUrl)
+        )
 
         if(hookToDelete){
             await octokit.rest.repos.deleteWebhook({
@@ -180,7 +186,7 @@ export async function getRepoFileContents(token : string, owner : string, repo :
 
     let files : {path:string, content:string}[] = []
 
-    for(let item of data){
+    for(const item of data){
         if(item.type === "file"){
             const { data : fileData} = await octokit.rest.repos.getContent({
                 owner,
@@ -231,6 +237,8 @@ export async function getPullReqDiff(token:string, owner:string, repo:string, pr
             format : 'diff'
         }
     })
+
+    console.log("pull req title -> ", pr.title)
 
     return {
         diff : diff as unknown as string,
