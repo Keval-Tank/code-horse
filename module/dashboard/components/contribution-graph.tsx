@@ -45,6 +45,7 @@ const ContributionGraph = () => {
                                 blockSize={15}
                                 blockMargin={2}
                                 fontSize={15}
+                                blockRadius={7}
                                 showWeekdayLabels
                                 showMonthLabels
                                 theme={

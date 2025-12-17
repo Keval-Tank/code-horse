@@ -3,7 +3,7 @@
 import prisma from "@/lib/db"
 
 export type SubscriptionTier = "FREE" | "PRO"
-export type SubscriptionStatus = "ACTIVE" | "CANCALLED" | "EXPIRED"
+export type SubscriptionStatus = "ACTIVE" | "CANCELED" | "EXPIRED"
 
 export interface UserLimits {
     tier : SubscriptionTier,
@@ -120,7 +120,7 @@ export async function decrementRepositoryCount(userId : string):Promise<void>{
 
 export async function incrementReviewCount(userId : string, repoId : string):Promise<void>{
     const usage = await getUserUsage(userId)
-    let reviewCount = usage.reviewCounts as Record<string, number>
+    const reviewCount = usage.reviewCounts as Record<string, number>
 
     reviewCount[repoId] = (reviewCount[repoId] || 0) + 1
 
@@ -172,5 +172,12 @@ export async function updateUserTier(userId : string, tier : SubscriptionTier, s
             subscriptionTier : tier,
             subscriptionStatus : status
         }
+    })
+}
+
+export async function updatePolarCustomerId(userId:string, polarCustomerId:string):Promise<void>{
+    await prisma.user.update({
+        where : {id : userId},
+        data : {polarCustomerId}
     })
 }
