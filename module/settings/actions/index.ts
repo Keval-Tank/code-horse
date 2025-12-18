@@ -3,7 +3,6 @@ import prisma from "@/lib/db"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { revalidatePath } from "next/cache" 
-import { success } from "zod"
 import { deleteWebHook } from "@/module/github/lib/github"
 
 export async function getUserProfile(){
