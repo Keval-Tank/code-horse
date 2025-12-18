@@ -14,7 +14,7 @@ export const auth = betterAuth({
         github: {
             clientId: process.env.GITHUB_CLIENT_ID!,
             clientSecret: process.env.GITHUB_CLIENT_SECRET,
-            scope: ["repo", "admin:repo_hook"]
+            scope: ["repo"]
         }
     },
     plugins: [
@@ -26,10 +26,10 @@ export const auth = betterAuth({
                     products: [
                         {
                             productId: process.env.PRODUCT_ID!,
-                            slug: "pro" // Custom slug for easy reference in Checkout URL, e.g. /checkout/CodeHorse
+                            slug: "this-is-best" // Custom slug for easy reference in Checkout URL, e.g. /checkout/CodeHorse
                         }
                     ],
-                    successUrl: process.env.POLAR_SUCCESS_URL,
+                    successUrl: process.env.POLAR_SUCCESS_URL || "/dashboard/subscription?success=true",
                     authenticatedUsersOnly: true
                 }),
                 portal({
@@ -79,7 +79,6 @@ export const auth = betterAuth({
                              email : payload.data.email
                            }
                         })
-
                         if(user){
                             await updatePolarCustomerId(user.id, payload.data.id)
                         }

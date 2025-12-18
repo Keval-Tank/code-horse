@@ -3,6 +3,8 @@ import { fetchUserContribution, getGithubToken } from "@/module/github/lib/githu
 import { Octokit } from "octokit"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
+import { useQuery } from "@tanstack/react-query"
+import { getUserUsage } from "@/module/payments/lib/subscription"
 import prisma from '@/lib/db'
 
 
@@ -54,24 +56,31 @@ export async function getDashboardStats(){
             throw new Error("Unauthorized")
         }
 
+        const userUsage = await prisma.userUsage.findUnique({
+            where : {
+                userId : session.user.id
+            }
+        })
+
         const token = await getGithubToken()
         const octokit = new Octokit({auth : token})
 
         const {data : user} = await octokit.rest.users.getAuthenticated()
 
-        const totalRepos = 30
+        const totalRepos = userUsage?.repositoryCount || 0
 
         const calendar = await fetchUserContribution(token, user.login)
 
         const totalCommits = calendar?.totalContributions || 0
 
         const {data : prs} = await octokit.rest.search.issuesAndPullRequests({
-            q : `author ${user.login} type:pr`,
+            q : `author:${user.login} type:pr`,
             per_page : 1
         })
 
+
         const totalPRs = prs.total_count
-        const totalReviews = 44
+        const totalReviews = Object.keys(userUsage?.reviewCounts!).length || 0
 
         return{
             totalCommits,

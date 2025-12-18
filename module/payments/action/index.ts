@@ -67,6 +67,7 @@ export async function getSubscriptionData(): Promise<SubscriptionData> {
 }   
 
 export async function syncSubscriptionStatus(){
+    console.log("Sync started")
     const session = await auth.api.getSession({
         headers : await headers()
     })
@@ -79,7 +80,7 @@ export async function syncSubscriptionStatus(){
         where : {id : session.user.id}
     })
 
-    if(!user || !user.polarCustomerId){
+    if(!user ||  !user.polarCustomerId){
         return {success:false, message : "No Polar customer id found"}
     }
 
@@ -105,7 +106,7 @@ export async function syncSubscriptionStatus(){
 
             return {success:true, status}
         }
-
+        console.log("SuccessFully synced data")
         return {success:true, status : "NO_SUBSCRIPTIONS"}
 
     } catch (error) {

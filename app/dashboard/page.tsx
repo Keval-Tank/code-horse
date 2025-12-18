@@ -7,6 +7,7 @@ import { getDashboardStats, getMonthlyActivity } from '@/module/dashboard/action
 import DataCard from '@/module/dashboard/components/data-cards'
 import ContributionGraph from '@/module/dashboard/components/contribution-graph'
 import ActivityGraph from '@/module/dashboard/components/activity-graph'
+import { getUserUsage } from '@/module/payments/lib/subscription'
 
 const Dashboard = () => {
   const {data : stats, isLoading} = useQuery({
@@ -20,6 +21,7 @@ const Dashboard = () => {
     queryFn : async() => await getMonthlyActivity(),
     refetchOnWindowFocus : false
   }) 
+  
   return (
     <div>
       <div>
