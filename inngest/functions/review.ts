@@ -11,7 +11,6 @@ export const generateReview = inngest.createFunction(
     { event: "pr.review.requested" },
     async ({ event, step }) => {
         const { owner, repo, prNumber, userId } = event.data
-
         const { diff, title, description, token } = await step.run('fetch-pr-data', async () => {
             const account = await prisma.account.findFirst({
                 where: {
@@ -24,7 +23,7 @@ export const generateReview = inngest.createFunction(
                 throw new Error("Github access token not found")
             }
 
-            const data = getPullReqDiff(account.accessToken, owner, repo, prNumber);
+            const data = await getPullReqDiff(account.accessToken, owner, repo, prNumber);
 
             return {
                 ...data,
@@ -91,7 +90,7 @@ Format your response in markdown.`
                     data : {
                     repositoryId : repository.id,
                     prNumber,
-                    prTitle : title || `PR${prNumber}`,
+                    prTitle : title,
                     prUrl : `https://github.com/${owner}/${repo}/pull/${prNumber}`,
                     review,
                     status : "completed"
