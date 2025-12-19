@@ -52,7 +52,7 @@ export async function retrieveContext(repoId : string, query: string, topK:numbe
 
     const results = await pineconeIndex.query({
         vector : embeddings,
-        filter : {repoId},
+        // filter : {repoId},
         topK,
         includeMetadata : true
     })

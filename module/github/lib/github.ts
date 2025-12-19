@@ -29,6 +29,19 @@ export const getGithubToken = async () => {
     return account.accessToken;
 }
 
+export async function fetchFollowersAndFollowing() {
+    const token = await getGithubToken()
+
+    const octokit = new Octokit({
+        auth : token
+    })
+
+    const followers = await octokit.rest.users.listFollowersForUser()
+    const following = await octokit.rest.users.listFollowingForUser()
+
+    console.log(`followers : ${followers}, following : ${following}`)
+}
+
 export async function fetchUserContribution(token: string, username: string) {
     const octokit = new Octokit({ auth: token })
 
@@ -166,7 +179,7 @@ export const deleteWebHook = async (owner: string, repo: string) => {
 
             if(!userId){
                 return false
-            }
+            } 
 
             await decrementRepositoryCount(userId.userId)
 

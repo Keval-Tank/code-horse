@@ -5,6 +5,7 @@ import { createWebHook, getRepositories } from "@/module/github/lib/github"
 import { auth } from "@/lib/auth"
 import { inngest } from "@/inngest/client"
 import { canAddRepo, incrementRepositoryCount } from "@/module/payments/lib/subscription"
+import { pineconeIndex } from "@/lib/pinecone"
 
 
 export const fetchRepositories = async (page: number = 1, perPage: number = 10) => {
@@ -50,7 +51,7 @@ export const connectRepository = async (owner: string, repo: string, githubId: n
     }
 
     if (webHook) {
-        await prisma.repository.create({
+        const repoData = await prisma.repository.create({
             data: {
                 githubId: BigInt(githubId),
                 name: repo,
@@ -61,6 +62,15 @@ export const connectRepository = async (owner: string, repo: string, githubId: n
             }
         })
         await incrementRepositoryCount(session.user.id)
+        const repoId = await prisma.repository.findFirst({
+            where : {
+                owner,
+                name : repo
+            },
+            select : {
+                id : true
+            }
+        })
         try {
             await inngest.send({
                 name: "repository.connected",
@@ -68,6 +78,13 @@ export const connectRepository = async (owner: string, repo: string, githubId: n
                     owner,
                     repo,
                     userId: session.user.id
+                }
+            })
+            await inngest.send({
+                name : "rank.a.repo",
+                data : {
+                    repoName : repoData.fullName,
+                    repoId : repoId?.id
                 }
             })
         } catch (err) {

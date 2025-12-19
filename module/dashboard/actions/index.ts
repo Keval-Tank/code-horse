@@ -4,124 +4,149 @@ import { Octokit } from "octokit"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import prisma from '@/lib/db'
+import { fetchFollowersAndFollowing } from "@/module/github/lib/github"
 
-export async function getContributionStats(){
-    try{
+export async function getContributionStats() {
+    try {
         const session = await auth.api.getSession({
-            headers : await headers()
+            headers: await headers()
         })
-        if(!session?.user){
+        if (!session?.user) {
             throw new Error("Session not found")
         }
         const token = await getGithubToken();
         const octokit = new Octokit({
-            auth : token
+            auth: token
         })
-        const {data : user} = await octokit.rest.users.getAuthenticated()
+        const { data: user } = await octokit.rest.users.getAuthenticated()
         const userName = user.login
 
         const calendar = await fetchUserContribution(token, userName)
 
-        if(!calendar){
+        if (!calendar) {
             return null
         }
 
-        const contributions = calendar.weeks.flatMap((week : any) => week.contributionDays.map((day : any) => ({
-            date : day.date,
-            count : day.contributionCount,
-            level : Math.min(4, Math.floor(day.contributionCount/3)),
+        const contributions = calendar.weeks.flatMap((week: any) => week.contributionDays.map((day: any) => ({
+            date: day.date,
+            count: day.contributionCount,
+            level: Math.min(4, Math.floor(day.contributionCount / 3)),
         })))
 
         return {
             contributions,
-            totalContributions : calendar.totalContributions
+            totalContributions: calendar.totalContributions
         }
 
-    }catch(error){
+    } catch (error) {
         console.log("Error while fetching contribution graph data", error)
         return null
     }
 }
 
-export async function getDashboardStats(){
-    try{
+export async function getDashboardStats() {
+    try {
         const session = await auth.api.getSession({
-            headers : await headers()
+            headers: await headers()
         })
 
-        if(!session?.user){
+        if (!session?.user) {
             throw new Error("Unauthorized")
         }
 
         const userUsage = await prisma.userUsage.findUnique({
-            where : {
-                userId : session.user.id
+            where: {
+                userId: session.user.id
             }
         })
 
         const token = await getGithubToken()
-        const octokit = new Octokit({auth : token})
+        const octokit = new Octokit({ auth: token })
 
-        const {data : user} = await octokit.rest.users.getAuthenticated()
+        const { data: user } = await octokit.rest.users.getAuthenticated()
 
         const totalRepos = userUsage?.repositoryCount || 0
 
         const calendar = await fetchUserContribution(token, user.login)
-
+        const followers = await octokit.rest.users.listFollowersForAuthenticatedUser()
+        // console.log(followers.data)
+        const followersList = followers.data.map((follower) => {
+            return {
+                id : follower.id,
+                name: follower.login,
+                designation : '',
+                image: follower.avatar_url
+            }
+        });
+        console.log("Followers -> ", followersList)
+        const followings = await octokit.rest.users.listFollowingForUser({
+            username : user.login
+        })
+        const followingList = followings.data.map((following) => {
+            return {
+                id : following.id,
+                name : following.login,
+                designation : '',
+                image : following.avatar_url
+            }
+        })
+        console.log("Following -> ", followingList)
         const totalCommits = calendar?.totalContributions || 0
 
-        const {data : prs} = await octokit.rest.search.issuesAndPullRequests({
-            q : `author:${user.login} type:pr`,
-            per_page : 1
+        const { data: prs } = await octokit.rest.search.issuesAndPullRequests({
+            q: `author:${user.login} type:pr`,
+            per_page: 1
         })
 
 
         const totalPRs = prs.total_count
         const totalReviews = Object.keys(userUsage?.reviewCounts!).length || 0
 
-        return{
+        return {
             totalCommits,
             totalPRs,
             totalReviews,
-            totalRepos
+            totalRepos,
+            followersList,
+            followingList
         }
 
-    }catch(error){
+    } catch (error) {
         console.log(error)
         return {
-            totalCommits : 0,
-            totalPRs : 0,
-            totalReviews : 0,
-            totalRepos : 0
+            totalCommits: 0,
+            totalPRs: 0,
+            totalReviews: 0,
+            totalRepos: 0
         }
     }
 }
 
-export async function getMonthlyActivity(){
-    try{
+export async function getMonthlyActivity() {
+    try {
         const session = await auth.api.getSession({
-            headers : await headers()
+            headers: await headers()
         })
 
-        if(!session?.user){
+        if (!session?.user) {
             throw new Error("Unauthorized")
         }
 
         const token = await getGithubToken()
         const octokit = new Octokit({
-            auth : token
+            auth: token
         })
 
-        const {data : user} = await octokit.rest.users.getAuthenticated()
+        const { data: user } = await octokit.rest.users.getAuthenticated()
 
         const calendar = await fetchUserContribution(token, user.login)
 
-        if(!calendar){
+        if (!calendar) {
             return [];
         }
 
-        const monthlyData : {
-            [key : string] : {commits : number; prs : number; reviews : number}
+        const monthlyData: {
+            [key: string]: { commits: number; prs: number; reviews: number }
         } = {}
 
         const monthNames = [
@@ -140,24 +165,24 @@ export async function getMonthlyActivity(){
         ]
 
         const now = new Date()
-        for(let i=5; i >= 0; i--){
-            const date = new Date(now.getFullYear(), now.getMonth()-i, 1);
+        for (let i = 5; i >= 0; i--) {
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const monthKey = monthNames[date.getMonth()];
-            monthlyData[monthKey] = {commits : 0, prs : 0, reviews : 0}
+            monthlyData[monthKey] = { commits: 0, prs: 0, reviews: 0 }
         }
 
-        calendar.weeks.forEach((week : any) => {
-            week.contributionDays.forEach((day : any) => {
+        calendar.weeks.forEach((week: any) => {
+            week.contributionDays.forEach((day: any) => {
                 const date = new Date(day.date)
                 const monthKey = monthNames[date.getMonth()]
-                if(monthlyData[monthKey]){
+                if (monthlyData[monthKey]) {
                     monthlyData[monthKey].commits += day.contributionCount;
                 }
             })
         })
 
         const sixMonthAgo = new Date()
-        sixMonthAgo.setMonth(sixMonthAgo.getMonth()-6);
+        sixMonthAgo.setMonth(sixMonthAgo.getMonth() - 6);
 
         // const genearteSampleReviews = () => {
         //     const sampleReviews = []
@@ -177,30 +202,30 @@ export async function getMonthlyActivity(){
         // }
 
         const reviews = await prisma.userUsage.findMany({
-            where : {
-                userId : session.user.id
+            where: {
+                userId: session.user.id
             },
-            select : {
-                createdAt : true
+            select: {
+                createdAt: true
             }
         })
 
         reviews.forEach((review) => {
             const monthKey = monthNames[review.createdAt.getMonth()];
-            if(monthlyData[monthKey]){
+            if (monthlyData[monthKey]) {
                 monthlyData[monthKey].reviews += 1
             }
         })
 
-        const {data : prs} = await octokit.rest.search.issuesAndPullRequests({
-            q : `language:javascript author:${user.login} type:pr created:>${sixMonthAgo.toISOString().split("T")[0]}`,
-            per_page : 100
+        const { data: prs } = await octokit.rest.search.issuesAndPullRequests({
+            q: `language:javascript author:${user.login} type:pr created:>${sixMonthAgo.toISOString().split("T")[0]}`,
+            per_page: 100
         })
 
         prs.items.forEach((pr) => {
             const date = new Date(pr.created_at)
             const monthKey = monthNames[date.getMonth()]
-            if(monthlyData[monthKey]){
+            if (monthlyData[monthKey]) {
                 monthlyData[monthKey].prs += 1
             }
         });
@@ -211,8 +236,8 @@ export async function getMonthlyActivity(){
         }))
 
 
-    }catch(error){
-        console.log("Error while fetching data : ",error)
+    } catch (error) {
+        console.log("Error while fetching data : ", error)
         return []
     }
 }
