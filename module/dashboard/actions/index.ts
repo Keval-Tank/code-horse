@@ -3,10 +3,7 @@ import { fetchUserContribution, getGithubToken } from "@/module/github/lib/githu
 import { Octokit } from "octokit"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
-import { useQuery } from "@tanstack/react-query"
-import { getUserUsage } from "@/module/payments/lib/subscription"
 import prisma from '@/lib/db'
-
 
 export async function getContributionStats(){
     try{
@@ -162,24 +159,31 @@ export async function getMonthlyActivity(){
         const sixMonthAgo = new Date()
         sixMonthAgo.setMonth(sixMonthAgo.getMonth()-6);
 
-        const genearteSampleReviews = () => {
-            const sampleReviews = []
-            const now = new Date()
+        // const genearteSampleReviews = () => {
+        //     const sampleReviews = []
+        //     const now = new Date()
 
-            for(let i=0; i<=45; i++){
-                const randomDaysAgo = Math.floor(Math.random()*180)
-                const reviewDate = new Date(now);
-                reviewDate.setDate(reviewDate.getDate() - randomDaysAgo)
+        //     for(let i=0; i<=45; i++){
+        //         const randomDaysAgo = Math.floor(Math.random()*180)
+        //         const reviewDate = new Date(now);
+        //         reviewDate.setDate(reviewDate.getDate() - randomDaysAgo)
 
-                sampleReviews.push({
-                    createdAt : reviewDate
-                })
+        //         sampleReviews.push({
+        //             createdAt : reviewDate
+        //         })
+        //     }
+
+        //     return sampleReviews
+        // }
+
+        const reviews = await prisma.userUsage.findMany({
+            where : {
+                userId : session.user.id
+            },
+            select : {
+                createdAt : true
             }
-
-            return sampleReviews
-        }
-
-        const reviews = genearteSampleReviews()
+        })
 
         reviews.forEach((review) => {
             const monthKey = monthNames[review.createdAt.getMonth()];
@@ -208,7 +212,7 @@ export async function getMonthlyActivity(){
 
 
     }catch(error){
-        console.log("Error while fetching data 1 : ",error)
+        console.log("Error while fetching data : ",error)
         return []
     }
 }

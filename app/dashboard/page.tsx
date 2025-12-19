@@ -9,6 +9,7 @@ import ContributionGraph from '@/module/dashboard/components/contribution-graph'
 import ActivityGraph from '@/module/dashboard/components/activity-graph'
 import { getUserUsage } from '@/module/payments/lib/subscription'
 
+
 const Dashboard = () => {
   const {data : stats, isLoading} = useQuery({
     queryKey : ["dashboard-stats"],
@@ -26,8 +27,10 @@ const Dashboard = () => {
     <div>
       <div>
         <div className="py-5 ml-5">
-           <h1 className="text-3xl font-bold">DashBoard</h1>
+           <div>
+            <h1 className="text-3xl font-bold">DashBoard</h1>
            <p>Overview of your coding activity and AI reviews</p>
+           </div>
         </div>
         <div className='flex items-center gap-3 ml-5'>
         <DataCard heading="Total Repositories" icon="branch" data={stats?.totalRepos} footer="Connected Repositories" isLoading={isLoading}/>
