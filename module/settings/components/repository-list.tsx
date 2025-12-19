@@ -64,7 +64,7 @@ const RepositoryList = () => {
             if (result?.success) {
                 queryClient.invalidateQueries({ queryKey: ['connected-repositories'] })
                 queryClient.invalidateQueries({ queryKey: ['dahsboard-stats'] })
-                toast.success("All Repositories are disconnected")
+                toast.success(`All ${repositories?.length} repositories are disconnected`)
                 setDisconnectAllOpen(true)
             } else {
                 toast.error("Failed to disconnect all repositories")
@@ -80,7 +80,8 @@ const RepositoryList = () => {
                         <CardDescription>Manage your connected Github Repositories</CardDescription>
                     </div>
                     <div>
-                        <AlertDialog open={disconnectAllOpen} onOpenChange={setDisconnectAllOpen}>
+                        {
+                         repositories && repositories.length > 0 && <AlertDialog open={disconnectAllOpen} onOpenChange={setDisconnectAllOpen}>
                             <AlertDialogTrigger asChild>
                                 <Button variant="destructive" size="sm">
                                     <Trash2 />
@@ -104,6 +105,7 @@ const RepositoryList = () => {
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
+                        }
                     </div>
                 </CardHeader>
                 <CardContent>

@@ -1,35 +1,36 @@
-import {Octokit} from 'octokit'
+import { Octokit } from 'octokit'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { headers } from 'next/headers'
+import { decrementRepositoryCount } from '@/module/payments/lib/subscription'
 
 
 
-export const getGithubToken = async() => {
+export const getGithubToken = async () => {
     const session = await auth.api.getSession({
-        headers : await headers()
+        headers: await headers()
     })
 
-    if(!session){
+    if (!session) {
         throw new Error("Unauthorized")
     }
 
     const account = await prisma.account.findFirst({
-        where : {
-            userId : session.user.id,
-            providerId : "github"
+        where: {
+            userId: session.user.id,
+            providerId: "github"
         }
     })
 
-    if(!account?.accessToken){
+    if (!account?.accessToken) {
         throw new Error("No Github access token found")
     }
 
     return account.accessToken;
 }
 
-export async function fetchUserContribution(token : string, username : string){
-    const octokit = new Octokit({auth : token})
+export async function fetchUserContribution(token: string, username: string) {
+    const octokit = new Octokit({ auth: token })
 
     const query = `
     query($username:String!){
@@ -50,16 +51,16 @@ export async function fetchUserContribution(token : string, username : string){
     }
     `
 
-    interface ContributionData{
-        user : {
-            contributionsCollection : {
-                contributionCalendar : {
-                    totalContributions : number
-                    weeks : {
-                        contributionDays : {
-                            contributionCount : number
-                            date : string | Date
-                            color : string
+    interface ContributionData {
+        user: {
+            contributionsCollection: {
+                contributionCalendar: {
+                    totalContributions: number
+                    weeks: {
+                        contributionDays: {
+                            contributionCount: number
+                            date: string | Date
+                            color: string
                         }
                     }
                 }
@@ -67,56 +68,57 @@ export async function fetchUserContribution(token : string, username : string){
         }
     }
 
-    try{
-        const response : ContributionData = await octokit.graphql(query,{
+    try {
+        const response: ContributionData = await octokit.graphql(query, {
             username
-        }) 
+        })
         return response.user.contributionsCollection.contributionCalendar
-    }catch(err){
+    } catch (err) {
         console.log("Error while Fecthing Data : ", err)
     }
 }
 
-export const getRepositories = async(page : number=1, perPage : number=10) => {
+
+export const getRepositories = async (page: number = 1, perPage: number = 10) => {
     const token = await getGithubToken()
     const octokit = new Octokit({
-        auth : token
+        auth: token
     })
-    const { data} = await octokit.rest.repos.listForAuthenticatedUser({
-        sort : "updated",
-        direction : "desc",
-        visibility : "all",
-        per_page : perPage,
-        page : page
+    const { data } = await octokit.rest.repos.listForAuthenticatedUser({
+        sort: "updated",
+        direction: "desc",
+        visibility: "all",
+        per_page: perPage,
+        page: page
     })
     return data
 }
 
-export const createWebHook = async(owner : string, repo : string) => {
+export const createWebHook = async (owner: string, repo: string) => {
     const token = await getGithubToken()
     const octokit = new Octokit({
-        auth : token
+        auth: token
     })
 
     const webHookUrl = `${process.env.NEXT_PUBLIC_URL}/api/webhooks/github`
 
-    const {data : hooks} = await octokit.rest.repos.listWebhooks({
+    const { data: hooks } = await octokit.rest.repos.listWebhooks({
         owner,
         repo
     })
 
     const existingHook = hooks.find(hook => hook.config.url === webHookUrl)
 
-    if(existingHook){
+    if (existingHook) {
         return existingHook
     }
 
-    const {data} = await octokit.rest.repos.createWebhook({
+    const { data } = await octokit.rest.repos.createWebhook({
         owner,
         repo,
-        config : {
-            url : webHookUrl,
-            content_type : "json"
+        config: {
+            url: webHookUrl,
+            content_type: "json"
         },
         events: ["pull_request"]
     })
@@ -125,20 +127,20 @@ export const createWebHook = async(owner : string, repo : string) => {
 
 }
 
-export const deleteWebHook = async(owner : string, repo : string) => {
-    try{
+export const deleteWebHook = async (owner: string, repo: string) => {
+    try {
         const token = await getGithubToken()
         const octokit = new Octokit({
-            auth : token
+            auth: token
         })
         const webHookUrl = `${process.env.NEXT_PUBLIC_URL}/api/webhooks/github`
 
-        const {data : hooks} = await octokit.rest.repos.listWebhooks({
+        const { data: hooks } = await octokit.rest.repos.listWebhooks({
             owner,
             repo
         })
 
-        const hookToDelete = hooks.find(hook =>  hook.config.url === webHookUrl.trim()
+        const hookToDelete = hooks.find(hook => hook.config.url === webHookUrl.trim()
             // console.log("hook url -> ",hook.config.url)
             // console.log("type of hook url ->", typeof hook.config.url)
             // console.log("webHookurl ->", webHookUrl)
@@ -146,19 +148,34 @@ export const deleteWebHook = async(owner : string, repo : string) => {
             // console.log("is equal ->", hook.config.url == webHookUrl)
         )
 
-        if(hookToDelete){
+        if (hookToDelete) {
             await octokit.rest.repos.deleteWebhook({
                 owner,
                 repo,
-                hook_id : hookToDelete.id
+                hook_id: hookToDelete.id
             })
+
+            const userId = await prisma.account.findFirst({
+                where: {
+                    accessToken: token
+                },
+                select: {
+                    userId: true
+                }
+            })
+
+            if(!userId){
+                return false
+            }
+
+            await decrementRepositoryCount(userId.userId)
 
             return true
         }
 
         return false
 
-    }catch(err : any){
+    } catch (err: any) {
         console.log("Failed to delete hook : ", err)
         console.log(err.request)
         console.log(err.response)
@@ -166,42 +183,41 @@ export const deleteWebHook = async(owner : string, repo : string) => {
     }
 }
 
-export async function getRepoFileContents(token : string, owner : string, repo : string, path:string = "")
-:Promise<{path:string, content:string}[]>
-{
+export async function getRepoFileContents(token: string, owner: string, repo: string, path: string = "")
+    : Promise<{ path: string, content: string }[]> {
     const octokit = new Octokit({
-        auth : token
+        auth: token
     })
-    const {data} = await octokit.rest.repos.getContent({owner, repo, path})
-    
-    if(!Array.isArray(data)){
-        if(data.type === "file" && data.content){
+    const { data } = await octokit.rest.repos.getContent({ owner, repo, path })
+
+    if (!Array.isArray(data)) {
+        if (data.type === "file" && data.content) {
             return [{
-                path : data.path,
-                content : Buffer.from(data.content, "base64").toString('utf-8')
+                path: data.path,
+                content: Buffer.from(data.content, "base64").toString('utf-8')
             }]
         }
         return [];
     }
 
-    let files : {path:string, content:string}[] = []
+    let files: { path: string, content: string }[] = []
 
-    for(const item of data){
-        if(item.type === "file"){
-            const { data : fileData} = await octokit.rest.repos.getContent({
+    for (const item of data) {
+        if (item.type === "file") {
+            const { data: fileData } = await octokit.rest.repos.getContent({
                 owner,
                 repo,
-                path : item.path
+                path: item.path
             })
-            if(!Array.isArray(fileData) && fileData.type === "file" && fileData.content){
-                if(!item.path.match('/\.(png|jpg|jpeg|pdf|svg|ico|zip|tar|gz)$/i')){
+            if (!Array.isArray(fileData) && fileData.type === "file" && fileData.content) {
+                if (!item.path.match('/\.(png|jpg|jpeg|pdf|svg|ico|zip|tar|gz)$/i')) {
                     files.push({
-                        path : item.path,
-                        content : Buffer.from(fileData.content, "base64").toString('utf-8')
+                        path: item.path,
+                        content: Buffer.from(fileData.content, "base64").toString('utf-8')
                     })
                 }
             }
-        }else if(item.type === "dir"){
+        } else if (item.type === "dir") {
             const subfiles = await getRepoFileContents(token, owner, repo, item.path)
 
             files = files.concat(subfiles)
@@ -212,50 +228,50 @@ export async function getRepoFileContents(token : string, owner : string, repo :
 }
 
 interface PullReqData {
-    diff : string,
-    title : string,
-    description : string,
-    token? : string
+    diff: string,
+    title: string,
+    description: string,
+    token?: string
 }
 
-export async function getPullReqDiff(token:string, owner:string, repo:string, prNumber:number):Promise<PullReqData>{
+export async function getPullReqDiff(token: string, owner: string, repo: string, prNumber: number): Promise<PullReqData> {
     const octokit = new Octokit({
-        auth : token
+        auth: token
     })
 
-    const {data : pr} = await octokit.rest.pulls.get({
+    const { data: pr } = await octokit.rest.pulls.get({
         owner,
         repo,
-        pull_number : prNumber
+        pull_number: prNumber
     })
 
-    const {data : diff} = await octokit.rest.pulls.get({
+    const { data: diff } = await octokit.rest.pulls.get({
         owner,
         repo,
-        pull_number : prNumber,
-        mediaType : {
-            format : 'diff'
+        pull_number: prNumber,
+        mediaType: {
+            format: 'diff'
         }
     })
 
     console.log("pull req title -> ", pr.title)
 
     return {
-        diff : diff as unknown as string,
-        title : pr.title,
-        description : pr.body || " ",
+        diff: diff as unknown as string,
+        title: pr.title,
+        description: pr.body || " ",
     }
 }
 
-export async function postReviewComment(token : string, owner: string, repo:string, prNumber : number, review : string){
+export async function postReviewComment(token: string, owner: string, repo: string, prNumber: number, review: string) {
     const octokit = new Octokit({
-        auth : token
+        auth: token
     })
 
     await octokit.rest.issues.createComment({
-        owner, 
+        owner,
         repo,
-        issue_number : prNumber,
-        body : `## AI Code Review\n\n${review}\n\n------\n*Powered By CodeHorse*##`
+        issue_number: prNumber,
+        body: `## AI Code Review\n\n${review}\n\n------\n*Powered By CodeHorse*##`
     })
 }

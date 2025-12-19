@@ -5,6 +5,7 @@ import { useTheme } from 'next-themes'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import {useSession} from '@/lib/auth-client'
+import { Wallet, LayoutDashboard } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -40,7 +41,7 @@ const navItems = [
   {
     title : "Dashboard",
     url : "/dashboard",
-    icon : BookOpen
+    icon : LayoutDashboard
   },
   {
     title : "Respository",
@@ -55,7 +56,7 @@ const navItems = [
   {
     title : "Subscription",
     url : "/dashboard/subscription",
-    icon : BookOpen
+    icon : Wallet
   },
   {
     title : "Settings",

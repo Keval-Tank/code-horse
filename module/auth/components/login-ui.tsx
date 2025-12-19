@@ -5,7 +5,6 @@ import { BotIcon, GithubIcon } from 'lucide-react'
 import { signIn } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Spotlight } from '@/components/ui/Spotlight'
 import { cn } from '@/lib/utils'
 
 const LoginUI = () => {
@@ -93,19 +92,19 @@ const LoginUI = () => {
 
                     <div className='w-full flex items-center justify-center'>
                         <div className='mb-9 mt-[20%]'>
-                            <h1 className='text-5xl text-white'>Welcome Back</h1>
-                            <p className='text-white text-md mb-5'>Login using Github</p>
-                            <div>
+                            <h1 className='text-5xl text-white'>Welcome</h1>
+                            <p className='text-white text-md mb-5'>Link your github account with code horse and start review your prs.</p>
+                            <div className='mt-10'>
                                 <Button className='h-max mb-5 w-[500px]' onClick={handleGithubLogin}>
                                     <div className='flex justify-center item-center gap-2 p-3'>
                                         <GithubIcon className='size-[30px] ' />
-                                        <span className='text-2xl'>{loading ? "Signing in..." : "GitHub"}</span>
+                                        <span className='text-2xl'>{loading ? "Signing in..." : "Link with GitHub"}</span>
                                     </div>
                                 </Button>
                             </div>
                         </div>
                     </div>
-                    <div className='flex justify-center gap-6 mt-[50px]'>
+                    <div className='flex justify-center gap-6 mt-[30px]'>
                         <Link href="#" className='text-md'>Terms of use</Link>
                         <span className='text-md'>and</span>
                         <Link href="#" className='text-md'>Privacy Policy</Link>
