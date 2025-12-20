@@ -10,14 +10,14 @@ export const rankArepo = inngest.createFunction(
     async ({ event, step }) => {
         const {repoId} = event.data
         const context = await step.run("retrieve-context", async() => {
-            const query = "what files would a human inspect to judge this dimension?"
+            const query = "folder structure architecture services controllers modules layers domain"
             return await retrieveContext(repoId, query)
         })
         await step.run("rank-a-repo", async () => {
             const prompt = `You are evaluating a software repository.
 
 Score ONLY the following dimension:
-"Repository hygiene & production readiness"
+"Repository folder structure & architecture"
 
 Here is the context for repository ${context.join("\n\n")}
 
@@ -37,7 +37,7 @@ Rules:
                 prompt
             })
 
-            console.log("text -> ", text)
+            console.log("text -> ", text.replaceAll('\n', "\n"))
 
             return text
         })

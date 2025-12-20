@@ -70,7 +70,7 @@ export async function getDashboardStats() {
         const calendar = await fetchUserContribution(token, user.login)
         const followers = await octokit.rest.users.listFollowersForAuthenticatedUser()
         // console.log(followers.data)
-        const followersList = followers.data.map((follower) => {
+        const followersList = followers.data.slice(0,3).map((follower) => {
             return {
                 id : follower.id,
                 name: follower.login,
@@ -78,11 +78,11 @@ export async function getDashboardStats() {
                 image: follower.avatar_url
             }
         });
-        console.log("Followers -> ", followersList)
+        // console.log("Followers -> ", followersList)
         const followings = await octokit.rest.users.listFollowingForUser({
             username : user.login
         })
-        const followingList = followings.data.map((following) => {
+        const followingList = followings.data.slice(0,3).map((following) => {
             return {
                 id : following.id,
                 name : following.login,
@@ -90,7 +90,7 @@ export async function getDashboardStats() {
                 image : following.avatar_url
             }
         })
-        console.log("Following -> ", followingList)
+        // console.log("Following -> ", followingList)
         const totalCommits = calendar?.totalContributions || 0
 
         const { data: prs } = await octokit.rest.search.issuesAndPullRequests({
