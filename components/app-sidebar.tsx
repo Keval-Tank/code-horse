@@ -5,7 +5,7 @@ import { useTheme } from 'next-themes'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import {useSession} from '@/lib/auth-client'
-import { Wallet, LayoutDashboard } from 'lucide-react'
+import { Wallet, LayoutDashboard, ScrollText} from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -63,6 +63,11 @@ const navItems = [
     url : "/dashboard/settings",
     icon : Settings
   },
+  {
+    title : "Score",
+    url : "/dashboard/score",
+    icon : ScrollText
+  }
 ]
 
 const AppSidebar = () => {

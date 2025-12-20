@@ -100,7 +100,11 @@ export async function getDashboardStats() {
 
 
         const totalPRs = prs.total_count
-        const totalReviews = Object.keys(userUsage?.reviewCounts!).length || 0
+        let totalReviews = 0
+        if(userUsage?.reviewCounts){
+           totalReviews =  Object.keys(userUsage?.reviewCounts!).length
+        }
+
 
         return {
             totalCommits,

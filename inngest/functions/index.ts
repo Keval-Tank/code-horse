@@ -2,31 +2,25 @@ import { inngest } from "../client";
 import prisma from "@/lib/db";
 import { getRepoFileContents} from "@/module/github/lib/github";
 import { indexCodebase } from "@/module/ai/rag";
+import { chunkData } from "@/module/ai/rag";
 
 
 export const indexRepo = inngest.createFunction(
     { id: "index-repo" },
     { event: "repository.connected" },
     async ({ event, step }) => {
-        const { owner, repo, userId } = event.data
-        const files = await step.run("fetch-files", async () => {
-            const account = await prisma.account.findFirst({
-                where: {
-                    providerId: "github",
-                    userId: userId,
-                }
-            })
-            if (!account?.accessToken) {
-                throw new Error("No Github access token found, unauthorized")
-            }
+       await step.run("fetching-and-indexing-repo", async() => {
+            try{
+        await fetch(`${process.env.NEXT_PUBLIC_URL}/api/index-repo`, {
+        method: "POST",
+        headers : {"Content-Type" : "application/json"},
+        body : JSON.stringify(event.data)
+       })
 
-            return await getRepoFileContents(account.accessToken, owner, repo)
-        })
-
-        await step.run("index-codebase", async() => {
-            await indexCodebase(`${owner}/${repo}`, files)
-        })
-
-        return {success : true, indexedFiles : files.length}
+       return {success : true}
+       }catch(error){
+        console.log("Failed to index : ", error)
+       }
+       })
     },
 );

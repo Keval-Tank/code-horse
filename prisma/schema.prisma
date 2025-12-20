@@ -63,9 +63,26 @@ model Repository {
   reviews     Review[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  score       Score?
 
   @@index([userId])
   @@map("repository")
+}
+
+model Chunks {
+  id         String      @id 
+  repoId     String
+  path       String
+  content    String       @db.Text
+
+  @@map("chunks")
+}
+
+model Score {
+  id         Int         @id @default(autoincrement())
+  repoId     String      @unique
+  text       String      @db.Text
+  repository Repository  @relation(fields:[repoId], references:[id], onDelete : Cascade)
 }
 
 model Review{
@@ -78,7 +95,7 @@ model Review{
   status           String          @default("completed")
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
-  repository       Repository     @relation(fields:[repositoryId], references:[id], onDelete:Cascade)
+  repository       Repository     @relation(fields:[repositoryId], references:[id])
 
   @@index([repositoryId])
   @@map("review")

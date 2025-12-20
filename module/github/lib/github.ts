@@ -203,6 +203,8 @@ export async function getRepoFileContents(token: string, owner: string, repo: st
     })
     const { data } = await octokit.rest.repos.getContent({ owner, repo, path })
 
+    // console.log("repo content -> ", data)
+
     if (!Array.isArray(data)) {
         if (data.type === "file" && data.content) {
             return [{
@@ -266,8 +268,6 @@ export async function getPullReqDiff(token: string, owner: string, repo: string,
             format: 'diff'
         }
     })
-
-    console.log("pull req title -> ", pr.title)
 
     return {
         diff: diff as unknown as string,

@@ -29,6 +29,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { AlertTriangle } from 'lucide-react'
+import prisma from '@/lib/db'
 
 const RepositoryList = () => {
     const queryClient = useQueryClient()
@@ -43,6 +44,7 @@ const RepositoryList = () => {
 
     const disconnectMutation = useMutation({
         mutationFn: async (repositoryId: string) => {
+
             return await disconnectRepository(repositoryId)
         },
         onSuccess: (result) => {
