@@ -3,13 +3,14 @@ import { inngest } from "../client"
 import { google } from "@ai-sdk/google"
 import { retrieveContext } from "@/module/ai/rag"
 import { RANK_QUERIES } from "@/module/ai/rag"
+import prisma from "@/lib/db"
 
 
 export const rankArepo = inngest.createFunction(
     { id: "rank-a-repo" },
     { event: "rank.a.repo" },
     async ({ event, step }) => {
-        const {repoId} = event.data
+        const {repoId, owner, repoName} = event.data
         const context = await step.run("retrieve-context", async() => {
             const query = "folder structure architecture services controllers modules layers domain"
             return await retrieveContext(repoId, RANK_QUERIES)
@@ -19,6 +20,10 @@ export const rankArepo = inngest.createFunction(
 
 Evaluate ONLY the following dimensions:
 ${Object.keys(RANK_QUERIES).join("\n")}
+
+for this repository:
+${repoId}
+and visit this "https://github.com/${owner}/${repoName}" url and analyze it's folder structure and go through files and analayze code for code quality and having in-depth context of repository.
 
 Definitions:
 ${Object.entries(RANK_QUERIES).map(([key, desc]) => ` -${key}: ${desc}`).join(',')}
@@ -44,11 +49,16 @@ Output Format (STRICT):
 }
 `
             const {text} = await generateText({
-                model : google("gemini-2.5-flash"),
+                model : google("gemini-3-flash-preview"),
                 prompt
             })
 
-            
+            await prisma.score.create({
+                data : {
+                    repoId : repoId,
+                    text : text
+                }
+            })
 
             return text
         })

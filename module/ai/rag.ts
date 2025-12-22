@@ -12,7 +12,7 @@ export async function generateEmbeddings(text: string) {
     return embedding
 }
 
-function chunkText(text: string, size: number = 800) {
+function chunkText(text: string, size: number = 1000) {
     const chunks = []
     for (let i = 0; i < text.length; i += size) {
         chunks.push(text.slice(i, i + size))
@@ -40,7 +40,7 @@ export async function chunkData(repoId : string, files: { path: string; content:
             const embeddings = await generateEmbeddings(chunk)
 
             chunks.push({
-                id : chunkId,
+                id : repoId,
                 values : embeddings,
                 metadata : {
                     repoId,
@@ -49,12 +49,14 @@ export async function chunkData(repoId : string, files: { path: string; content:
                 }
             })
 
+            const safeChunk = chunk.replace(/\u0000/g, " ")
+
             await prisma.chunks.create({
                 data :  {
                     id : chunkId,
                     repoId,
                     path : file.path,
-                    content : chunk
+                    content : safeChunk
                 },
                 select:{
                     id : true
@@ -75,11 +77,12 @@ export async function indexCodebase(chunks : {
             chunkId : string
         }
     }[]) {
-    // const batchSize = 100
-   chunks.forEach(async(chunk) => {
-    await pineconeIndex.upsert(chunk as any)
-   })
-   chunks.length = 0;
+    const batchSize = 1000
+    for(let i=0; i<chunks.length; i += batchSize){
+        const batch = chunks.slice(i, i+=batchSize)
+        await pineconeIndex.upsert(batch)
+    }
+   
     console.log("Indexing completed")
 }
 
@@ -93,17 +96,39 @@ export const RANK_QUERIES = {
     security : "authentication authorization tokens secrets environment variables"
 }
 
-export async function retrieveContext(repoId: string, queries: Object, topK: number = 5) {
+export async function retrieveContext(repoId: string, queries: Object, topK: number = 500) {
     const query = Array.from(Object.values(queries)).join(",")
     const embeddings = await generateEmbeddings(query)
 
     
     const results = await pineconeIndex.query({
         vector: embeddings,
-        // filter : {},
         topK,
         includeMetadata: true
     })
 
-    return results.matches.map(match => match.metadata?.content as string).filter(Boolean)
+    // console.log("results -> ", results)
+
+    const chunkIds : string[] = results.matches.map(match => match.metadata?.chunkId as string).filter(match => match != undefined)
+
+    // console.log("chunkIds -> ", chunkIds)
+
+    const chunks = await prisma.chunks.findMany({
+        where : {
+            id : {
+                in : chunkIds
+            },
+        },
+        select : {
+            content : true
+        },
+    })
+
+    // console.log("chunks -> ", chunks)
+
+    const resultChunks = chunks.map(chunk => chunk.content.replaceAll(/\n/g, " "))
+
+    // console.log("final chunks -> ", resultChunks)
+
+    return resultChunks
 }

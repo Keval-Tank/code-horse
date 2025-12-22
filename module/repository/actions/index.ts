@@ -83,8 +83,9 @@ export const connectRepository = async (owner: string, repo: string, githubId: n
             await inngest.send({
                 name : "rank.a.repo",
                 data : {
-                    repoName : repoData.fullName,
-                    repoId : repoId?.id
+                    repoName : repoData.name,
+                    repoId : repoId?.id,
+                    owner
                 }
             })
         } catch (err) {

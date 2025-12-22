@@ -83,6 +83,8 @@ model Score {
   repoId     String      @unique
   text       String      @db.Text
   repository Repository  @relation(fields:[repoId], references:[id], onDelete : Cascade)
+
+  @@map("score")
 }
 
 model Review{

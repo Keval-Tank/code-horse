@@ -59,14 +59,14 @@ const navItems = [
     icon : Wallet
   },
   {
-    title : "Settings",
-    url : "/dashboard/settings",
-    icon : Settings
-  },
-  {
     title : "Score",
     url : "/dashboard/score",
     icon : ScrollText
+  },
+  {
+    title : "Settings",
+    url : "/dashboard/settings",
+    icon : Settings
   }
 ]
 
